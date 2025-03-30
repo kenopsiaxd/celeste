@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celeste Mod Loader</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+        .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--background-dark) 0%, var(--background-light) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+      overflow: hidden;
+    }
+    
+    .loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .loading-logo-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 30px;
+      animation: bounce 2s infinite;
+    }
+    
+    .loading-logo {
+      width: 150px;
+      height: 150px;
+      z-index: 2;
+      filter: drop-shadow(0 0 10px rgba(248, 165, 194, 0.7));
+    }
+    
+    .loading-logo-glow {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(248, 165, 194, 0.4) 0%, rgba(248, 165, 194, 0) 70%);
+      border-radius: 50%;
+      animation: pulse 3s infinite alternate;
+    }
+    
+    .loading-text {
+      margin-top: 25px;
+      color: var(--primary-color, #f8a5c2);
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-shadow: 0 0 10px rgba(248, 165, 194, 0.7);
+      animation: fadeInOut 2s infinite;
+    }
+    
+    .loading-progress {
+      width: 200px;
+      height: 4px;
+      background: rgba(58, 58, 78, 0.3);
+      border-radius: 2px;
+      margin-top: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(248, 165, 194, 0.3);
+    }
+    
+    .loading-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary-color, #f8a5c2), var(--secondary-color, #ffcad4));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      animation: progress 2s ease-out forwards;
+      box-shadow: 0 0 5px var(--primary-color, #f8a5c2);
+    }
+    
+    .loading-particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .particle {
+      position: absolute;
+      background-color: var(--primary-color, #f8a5c2);
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: float 15s linear infinite;
+    }
+    
+    @keyframes progress {
+      0% {
+        width: 0%;
+      }
+      100% {
+        width: 100%;
+      }
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.6;
+      }
+      90% {
+        opacity: 0.6;
+      }
+      100% {
+        transform: translateY(-50px) translateX(100px);
+        opacity: 0;
+      }
+    }
+    
+    @keyframes pulse {
+      0% {
+        opacity: 0.5;
+        transform: scale(0.9);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    }
+    
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+    
+    @keyframes fadeInOut {
+      0%, 100% {
+        opacity: 0.8;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body class="default-theme-applied">
+  
+  <div class="loading-screen default-theme-applied" id="loading-screen">
+    <div class="loading-particles" id="loading-particles"></div>
+    <div class="loading-logo-container">
+      <div class="loading-logo-glow"></div>
+      <img src="assets/logo.png" alt="Celeste Logo" class="loading-logo">
+    </div>
+    <div class="loading-text">CELESTE MOD LOADER</div>
+    <div class="loading-progress">
+      <div class="loading-progress-bar" id="loading-progress-bar"></div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    
+    <div class="title-bar">
+      <div class="title">Celeste Mod Loader</div>
+      <div class="window-controls">
+        <button id="minimize-btn" class="window-control"><i class="fas fa-minus"></i></button>
+        <button id="maximize-btn" class="window-control"><i class="fas fa-expand"></i></button>
+        <button id="close-btn" class="window-control"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    
+    <div class="content">
+      <div class="sidebar">
+        <div class="logo">
+          <img src="assets/logo.png" alt="Celeste Logo" id="logo-img">
+        </div>
+        <nav>
+          <ul>
+            <li class="active" data-tab="mods"><i class="fas fa-puzzle-piece"></i> Mods</li>
+            <li data-tab="repository"><i class="fas fa-cloud-download-alt"></i> Repository</li>
+            <li data-tab="themes"><i class="fas fa-paint-brush"></i> Themes</li>
+            <li data-tab="settings"><i class="fas fa-cog"></i> Settings</li>
+            <li data-tab="about"><i class="fas fa-info-circle"></i> About</li>
+          </ul>
+        </nav>
+        
+        <div class="sidebar-footer">
+          <div class="social-links">
+            <a href="https://github.com/kenopsiaxd/celeste" class="github-link">
+              <i class="fab fa-github"></i> GitHub
+            </a>
+            <a href="https://discord.gg/RVWYdBe5Yn" class="discord-link">
+              <i class="fab fa-discord"></i> Discord
+            </a>
+          </div>
+          <div class="version">Celeste Mod Loader v1.0.0</div>
+        </div>
+      </div>
+
+      
+      <div class="main-content">
+        
+        <div class="tab-content active" id="mods-tab">
+          <h2>Installed Mods</h2>
+          <div class="search-bar">
+            <input type="text" id="mod-search" placeholder="Search mods...">
+            <button id="refresh-btn"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div class="mods-container" id="mods-list">
+            
+            <div class="mod-card placeholder">
+              <div class="mod-info">
+                <h3>Loading mods...</h3>
+                <p>Please wait while we load your mods.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        
+        <div class="tab-content" id="repository-tab">
+          <h2>Mod Repository</h2>
+          <div class="search-bar">
+            <input type="text" id="repo-search" placeholder="Search repository...">
+            <button id="repo-refresh-btn"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div class="repository-filters">
+            <select id="category-filter">
+              <option value="all">All Categories</option>
+              <option value="gameplay">Gameplay</option>
+              <option value="visual">Visual</option>
+              <option value="audio">Audio</option>
+              <option value="utility">Utility</option>
+            </select>
+            <select id="sort-by">
+              <option value="popular">Most Popular</option>
+              <option value="recent">Recently Added</option>
+              <option value="updated">Recently Updated</option>
+              <option value="name">Name (A-Z)</option>
+            </select>
+          </div>
+          <div class="mods-container" id="repository-list">
+            
+            <div class="mod-card placeholder">
+              <div class="mod-info">
+                <h3>Loading repository...</h3>
+                <p>Please wait while we fetch available mods.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        
+        <div class="tab-content" id="themes-tab">
+          <h2>UI Themes</h2>
+          <div class="themes-container">
+            <div class="theme-card" data-theme="default">
+              <div class="theme-preview theme-default"></div>
+              <div class="theme-info">
+                <h3>Default</h3>
+                <p>The default Celeste theme</p>
+                <button class="apply-theme-btn" data-theme="default">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="dark">
+              <div class="theme-preview theme-dark"></div>
+              <div class="theme-info">
+                <h3>Dark Mode</h3>
+                <p>A darker theme for night use</p>
+                <button class="apply-theme-btn" data-theme="dark">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="light">
+              <div class="theme-preview theme-light"></div>
+              <div class="theme-info">
+                <h3>Light Mode</h3>
+                <p>A lighter, cleaner theme</p>
+                <button class="apply-theme-btn" data-theme="light">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="synthwave">
+              <div class="theme-preview theme-synthwave"></div>
+              <div class="theme-info">
+                <h3>Synthwave</h3>
+                <p>Retro vibes with neon colors</p>
+                <button class="apply-theme-btn" data-theme="synthwave">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="pastel-dream">
+              <div class="theme-preview pastel-dream"></div>
+              <div class="theme-info">
+                <h3>Pastel Dream</h3>
+                <p>Soft pastel colors with dreamy feel</p>
+                <button class="apply-theme-btn" data-theme="pastel-dream">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="cherry-blossom">
+              <div class="theme-preview cherry-blossom"></div>
+              <div class="theme-info">
+                <h3>Cherry Blossom</h3>
+                <p>Inspired by Japanese sakura</p>
+                <button class="apply-theme-btn" data-theme="cherry-blossom">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="mint-chocolate">
+              <div class="theme-preview mint-chocolate"></div>
+              <div class="theme-info">
+                <h3>Mint Chocolate</h3>
+                <p>Cool mint with chocolate accents</p>
+                <button class="apply-theme-btn" data-theme="mint-chocolate">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="lavender-fields">
+              <div class="theme-preview lavender-fields"></div>
+              <div class="theme-info">
+                <h3>Lavender Fields</h3>
+                <p>Relaxing purple hues</p>
+                <button class="apply-theme-btn" data-theme="lavender-fields">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="ocean-breeze">
+              <div class="theme-preview ocean-breeze"></div>
+              <div class="theme-info">
+                <h3>Ocean Breeze</h3>
+                <p>Refreshing blues and teals</p>
+                <button class="apply-theme-btn" data-theme="ocean-breeze">Apply</button>
+              </div>
+            </div>
+            <div class="theme-card" data-theme="strawberry-milk">
+              <div class="theme-preview strawberry-milk"></div>
+              <div class="theme-info">
+                <h3>Strawberry Milk</h3>
+                <p>Sweet pink and creamy white</p>
+                <button class="apply-theme-btn" data-theme="strawberry-milk">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="tab-content" id="settings-tab">
+          <h2>Settings</h2>
+          <div class="settings-form">
+            <div class="form-group">
+              <label for="game-path">Celeste Game Path:</label>
+              <div class="path-input">
+                <input type="text" id="game-path" placeholder="Select Celeste game directory...">
+                <button id="browse-game-path"><i class="fas fa-folder-open"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="mods-directory">Mods Directory:</label>
+              <div class="path-input">
+                <input type="text" id="mods-directory" placeholder="Select mods directory...">
+                <button id="browse-mods-directory"><i class="fas fa-folder-open"></i></button>
+              </div>
+            </div>
+            
+            <h3 class="settings-section-title">Application Settings</h3>
+            <div class="form-group">
+              <label for="auto-update">Auto-Update:</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="auto-update" checked>
+                <span class="slider"></span>
+              </label>
+              <span class="setting-description">Automatically check for updates on startup</span>
+            </div>
+            <div class="form-group">
+              <label for="launch-on-startup">Launch on Startup:</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="launch-on-startup">
+                <span class="slider"></span>
+              </label>
+              <span class="setting-description">Launch Celeste Mod Loader when Windows starts</span>
+            </div>
+            <div class="form-group">
+              <label for="minimize-to-tray">Minimize to Tray:</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="minimize-to-tray" checked>
+                <span class="slider"></span>
+              </label>
+              <span class="setting-description">Minimize to system tray instead of taskbar</span>
+            </div>
+            
+            <div class="form-actions">
+              <button id="save-settings" class="primary-btn">Save Settings</button>
+              <button id="reset-settings">Reset to Default</button>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="tab-content" id="about-tab">
+          <h2>About Celeste Mod Loader</h2>
+          <div class="about-content">
+            <div class="about-header">
+              <img src="assets/logo.png" alt="Celeste Logo" class="about-logo">
+              <h2>Celeste Mod Loader</h2>
+              <p class="version">Version 1.0.0</p>
+            </div>
+            
+            <p>Celeste Mod Loader is an advanced mod loader for the Celeste game, designed to help you manage and install mods easily with a beautiful interface.</p>
+            
+            <div class="creator-info">
+              <h3>Created by</h3>
+              <a href="https://github.com/kenopsiaxd" target="_blank" class="creator-link">
+                <i class="fab fa-github"></i> kenopsiaxd
+              </a>
+            </div>
+            
+            <h3>How to use:</h3>
+            <ol>
+              <li>Set your Celeste game directory in the Settings tab</li>
+              <li>Install mods from the Repository tab or by placing them in the mods directory</li>
+              <li>Enable or disable mods from the Mods tab</li>
+              <li>Customize the appearance in the Themes tab</li>
+              <li>Launch the game with mods using the "Launch Game" button</li>
+            </ol>
+            
+            <div class="about-footer">
+              <p class="disclaimer">This mod loader is not affiliated with the official Celeste game developers.</p>
+              <p> 2025 kenopsiaxd - All rights reserved</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="status-bar">
+      <div class="status-message" id="status-message">Ready</div>
+      <div class="status-actions">
+        <button id="backup-mods" class="secondary-btn"><i class="fas fa-save"></i> Backup Mods</button>
+        <button id="launch-game" class="primary-btn"><i class="fas fa-play"></i> Launch Game</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

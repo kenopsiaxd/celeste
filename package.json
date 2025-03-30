@@ -1,0 +1,23 @@
+{
+  "name": "celeste-inzoi-mod-loader",
+  "version": "1.0.0",
+  "description": "Modern mod loader for InZoi game",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder"
+  },
+  "author": "kenopsiaxd",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "adm-zip": "^0.5.16",
+    "auto-launch": "^5.0.6",
+    "electron-store": "^8.1.0"
+  }
+}
